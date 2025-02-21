@@ -20,15 +20,12 @@
 
 import pyzed.sl as sl
 import math
-import numpy as np
-import sys
 import math
+import cv2
 
 def main():
-    # Create a Camera object
+    # Create and configure a Camera object
     zed = sl.Camera()
-
-    # Create a InitParameters object and set configuration parameters
     init_params = sl.InitParameters(depth_mode=sl.DEPTH_MODE.ULTRA,
                                 coordinate_units=sl.UNIT.MILLIMETER)
 
@@ -40,7 +37,6 @@ def main():
 
     # Create and set RuntimeParameters after opening the camera
     runtime_parameters = sl.RuntimeParameters()
-    
     image = sl.Mat()
     depth = sl.Mat()
 
@@ -48,22 +44,30 @@ def main():
         while True:
             # A new image is available if grab() returns SUCCESS
             if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
-                # Retrieve left image
+                # Retrieve left image and measure its depth
                 zed.retrieve_image(image, sl.VIEW.LEFT)
-                # Retrieve depth map. Depth is aligned on the left image
                 zed.retrieve_measure(depth, sl.MEASURE.DEPTH)
 
                 # Get and print distance value in mm at the center of the image
-                # We measure the distance camera - object using Euclidean distance
                 x = round(image.get_width() / 2)
                 y = round(image.get_height() / 2)
                 err, distance = depth.get_value(x,y)
+
+                # detect leds
+                
+
+                # draw circle
+                cv2_img = image.get_data()
+                cv2.circle(cv2_img, (x, y), 5, (255, 0, 0), 3)
+                cv2.imshow("left camera", cv2_img)
+                cv2.waitKey(10)
 
                 if math.isfinite(distance):
                     print(f"Distance to Camera at {{{x};{y}}}: {distance}")
                 else : 
                     print(f"The distance can not be computed at {{{x};{y}}}")
     finally:
+        cv2.destroyAllWindows()
         zed.close()
 
 if __name__ == "__main__":
