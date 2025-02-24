@@ -17,20 +17,21 @@
 # THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# DEALINGS INx THE SOFTWARE.
 
 import Jetson.GPIO as GPIO
 import time
 
 # Pin Definitions
-input_pin = 18
+input_pin = 15
 
 def main():
     print(GPIO.JETSON_INFO)
 
     # Pin Setup:
-    GPIO.setmode(GPIO.BCM)  # BCM pin-numbering scheme from Raspberry Pi
-    GPIO.setup(input_pin, GPIO.IN)  # set pin as an input pin
+    GPIO.setmode(GPIO.BOARD)  # BCM pin-numbering scheme from Raspberry Pi
+    #GPIO.setup(input_pin, GPIO.IN)  # set pin as an input pin
+    GPIO.setup(input_pin, GPIO.IN)
     print("Starting demo now! Press CTRL+C to exit")
     try:
         while True:
