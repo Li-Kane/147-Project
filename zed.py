@@ -42,6 +42,20 @@ def find_leds(img: np.ndarray):
         cv2.circle(img, green_led, 5, (255, 0, 0), 3)
     
     # find red led
+    lower_red1 = np.array([0, 150, 200])
+    upper_red1 = np.array([20, 255, 255])
+    red_mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+    lower_red2 = np.array([160, 150, 200])
+    upper_red2 = np.array([180, 255, 255])
+    red_mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+    red_mask = cv2.bitwise_or(red_mask1, red_mask2)
+    contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        largest_contour = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(largest_contour)
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        red_led = (int(x + w/2), int(y + h/2))
+        cv2.circle(img, red_led, 5, (255, 0, 0), 3)
 
     return (green_led, red_led)
 
@@ -54,6 +68,7 @@ def main():
 
     # Open the camera
     status = zed.open(init_params)
+    zed.set_camera_settings(sl.VIDEO_SETTINGS.EXPOSURE, 20)
     if status != sl.ERROR_CODE.SUCCESS: #Ensure the camera has opened succesfully
         print("Camera Open : "+repr(status)+". Exit program.")
         exit()
@@ -66,9 +81,6 @@ def main():
     # config cv2 windows
     cv2.namedWindow("camera", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("camera", 800, 600)
-    cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
-    cv2.resizeWindow("mask", 800, 600)
-
     try:
         while True:
             # A new image is available if grab() returns SUCCESS
@@ -77,22 +89,24 @@ def main():
                 zed.retrieve_image(image, sl.VIEW.LEFT)
                 zed.retrieve_measure(depth, sl.MEASURE.DEPTH)
 
-                # Get and print distance value in mm at the center of the image
-                # x = round(image.get_width() / 2)
-                # y = round(image.get_height() / 2)
-                # err, distance = depth.get_value(x,y)
-
                 # detect leds
                 cv2_img = image.get_data()
                 green_led, red_led = find_leds(cv2_img)
                 
                 # get distances to the leds
-                if (green_led != (-1, -1)):
-                    err, green_dist = depth.get_value(green_led[0], green_led[1])
-                    if (math.isfinite(green_dist)):
-                        print(f"Distance to green led: {green_dist}")
-                    else : 
-                        print(f"The distance can not be computed for green led")
+                # if (green_led != (-1, -1)):
+                #     err, green_dist = depth.get_value(green_led[0], green_led[1])
+                #     if (math.isfinite(green_dist)):
+                #         print(f"Distance to green led: {green_dist}")
+                #     else : 
+                #         print(f"The distance can not be computed for green led")
+                
+                # if (red_led != (-1, -1)):
+                #     err, red_dist = depth.get_value(red_led[0], red_led[1])
+                #     if (math.isfinite(red_dist)):
+                #         print(f"Distance to red led: {red_dist}")
+                #     else : 
+                #         print(f"The distance can not be computed for red led")
 
                 cv2.imshow("camera", cv2_img)
                 cv2.waitKey(10)

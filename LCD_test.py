@@ -10,6 +10,7 @@ LCD_D6 = 23
 LCD_D7 = 24
 LCD_WIDTH = 16   # Characters per line
 LCD_LINE_1 = 0x80  # LCD RAM address for the 1st line
+LCD_LINE_2 = 0xC0  # LCD RAM address for the 1st line
 E_PULSE = 0.0005
 E_DELAY = 0.0005
 
@@ -59,7 +60,8 @@ def main():
 
     try:
         # Display "HELLO!" on the first line
-        lcd_string("HELLO!", LCD_LINE_1)
+        lcd_string("HELLO", LCD_LINE_1)
+        lcd_string("WORLD", LCD_LINE_2)
         while True:
             time.sleep(1)  # Keep displaying the text
     except KeyboardInterrupt:
