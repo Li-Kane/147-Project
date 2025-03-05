@@ -19,10 +19,16 @@
 ########################################################################
 
 import pyzed.sl as sl
-import math
 import cv2
 import numpy as np
 
+def get_cam_intrinsics(zed: sl.Camera):
+    params = zed.get_camera_information().camera_configuration.calibration_parameters.left_cam
+    intrinsic = np.array([[params.fx, 0, params.cx],
+                    [0, params.fy, params.cy],
+                    [0, 0, 1]])
+    distortion = params.disto
+    return intrinsic, distortion
 
 def find_leds(img: np.ndarray):
     green_led = (-1, -1)
@@ -76,7 +82,10 @@ def main():
     # Create and set RuntimeParameters after opening the camera
     runtime_parameters = sl.RuntimeParameters()
     image = sl.Mat()
-    depth = sl.Mat()
+    points = sl.Mat()
+
+    # Get camera intrinsics
+    CAMERA_INTRINSICS, DISTORTION = get_cam_intrinsics(zed)
 
     # config cv2 windows
     cv2.namedWindow("camera", cv2.WINDOW_NORMAL)
@@ -87,26 +96,30 @@ def main():
             if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
                 # Retrieve left image and measure its depth
                 zed.retrieve_image(image, sl.VIEW.LEFT)
-                zed.retrieve_measure(depth, sl.MEASURE.DEPTH)
+                zed.retrieve_measure(points, sl.MEASURE.XYZ)
 
                 # detect leds
                 cv2_img = image.get_data()
                 green_led, red_led = find_leds(cv2_img)
                 
-                # get distances to the leds
-                # if (green_led != (-1, -1)):
-                #     err, green_dist = depth.get_value(green_led[0], green_led[1])
-                #     if (math.isfinite(green_dist)):
-                #         print(f"Distance to green led: {green_dist}")
-                #     else : 
-                #         print(f"The distance can not be computed for green led")
-                
-                # if (red_led != (-1, -1)):
-                #     err, red_dist = depth.get_value(red_led[0], red_led[1])
-                #     if (math.isfinite(red_dist)):
-                #         print(f"Distance to red led: {red_dist}")
-                #     else : 
-                #         print(f"The distance can not be computed for red led")
+                # get points of the leds
+                if (green_led != (-1, -1) and red_led != (-1, -1)):
+                    _, green_point = points.get_value(green_led[0], green_led[1])
+                    _, red_point = points.get_value(red_led[0], red_led[1])
+                    # interpolate a point 305 mm from green -> red -> point
+                    if (not np.any(np.isnan(green_point)) and not np.any(np.isnan(red_point))):
+                        direction = red_point - green_point
+                        direction = direction / np.linalg.norm(direction)
+                        new_point = direction * 305 + red_point
+                        new_point = new_point[:-1]
+                        # project point cloud to image x, y
+                        rotation = sl.Rotation().get_rotation_vector()
+                        translation = sl.Translation().get()
+                        img_pts, _ = cv2.projectPoints(new_point, rotation, translation, CAMERA_INTRINSICS, DISTORTION)
+                        if(not np.any(np.isnan(img_pts[0][0]))):
+                            origin = (int(img_pts[0][0][0]), int(img_pts[0][0][1]))
+                            cv2.circle(cv2_img, origin, 5, [255, 255, 255], -1)
+                        
 
                 cv2.imshow("camera", cv2_img)
                 cv2.waitKey(10)
