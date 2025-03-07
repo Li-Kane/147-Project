@@ -75,13 +75,13 @@ class Zed:
                 return
             _, expected = self.points.get_value(int(img_pt[0][0][0]), int(img_pt[0][0][1]))
             difference = np.linalg.norm(curr_point - expected)
-            if(np.any(np.isnan(difference)) or difference < 200):
-                continue
-            # if our ray march has a background (that causes distance) to be further than 200
-            # we will draw a line earlier than we are supposed to
-            self.end = (int(img_pt[0][0][0]), int(img_pt[0][0][1]))
-            distance = np.linalg.norm(expected - self.red_pt)
-            print("distance: ", distance)
+            if(not np.any(np.isnan(difference)) and difference > 200):
+                # if our ray march has a background (that causes distance) to be further than 200
+                # we will draw a line earlier than we are supposed to
+                self.end = (int(img_pt[0][0][0]), int(img_pt[0][0][1]))
+                distance = np.linalg.norm(expected - self.red_pt)
+                print("distance: ", distance)
+                #return
 
 
     def draw(self):
