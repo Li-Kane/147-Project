@@ -104,11 +104,11 @@ void body_sonic(SharedVariable* sv) {
 	while(digitalRead(PIN_SONIC_ECHO) == 0){
         }
 	printf("echo reading went high \n");
-	startTime = micros();
+	long startTime = micros();
         while(digitalRead(PIN_SONIC_ECHO) == 1){
 	}
-	travelTime = micros() - startTime;
-        dist = travelTime / 58;
+    long travelTime = micros() - startTime;
+    float dist = travelTime / 58;
 	printf("Measured a dist of %f\n", dist);
 	delayMicroseconds(100);
 }
