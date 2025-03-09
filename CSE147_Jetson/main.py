@@ -30,7 +30,7 @@ def main():
 
     # Open the camera
     status = camera.open(init_params)
-    #$camera.set_camera_settings(sl.VIDEO_SETTINGS.EXPOSURE, 20)
+    camera.set_camera_settings(sl.VIDEO_SETTINGS.EXPOSURE, 10)
     if status != sl.ERROR_CODE.SUCCESS: #Ensure the camera has opened succesfully
         print("Camera Open : "+repr(status)+". Exit program.")
         exit()

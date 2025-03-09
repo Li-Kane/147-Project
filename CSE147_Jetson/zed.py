@@ -13,7 +13,7 @@ class Zed:
     end = (-1, -1)
     cv2_img = None
     # maximum march distance in mm
-    MAX_DISTANCE = 2000
+    MAX_DISTANCE = 5000
     STEP_SIZE = 50
 
     def __init__(self, camera: sl.Camera):
@@ -68,6 +68,7 @@ class Zed:
         expected = (-1, -1, -1, -1)
         curr_point = np.copy(self.red_pt)
         for i in range(0, self.MAX_DISTANCE, self.STEP_SIZE):
+            #self.STEP_SIZE = max(5, int(np.linalg.norm(self.red_pt - curr_point) * 0.05)) 
             curr_point += self.direction * self.STEP_SIZE
             img_pt, _ = cv2.projectPoints(curr_point[:-1], np.ndarray(shape=(3)), np.ndarray(shape=(3)), self.CAM_INTRINSICS, self.DISTORTION)
             if(np.any(np.isnan(img_pt[0][0])) or img_pt[0][0][0] < 0 or img_pt[0][0][0] > self.points.get_width() or img_pt[0][0][1] < 0 or img_pt[0][0][1] > self.points.get_height()):
@@ -75,12 +76,14 @@ class Zed:
                 return
             _, expected = self.points.get_value(int(img_pt[0][0][0]), int(img_pt[0][0][1]))
             difference = np.linalg.norm(curr_point - expected)
-            if(not np.any(np.isnan(difference)) and difference < 30):
+            cv2.circle(self.cv2_img, (int(img_pt[0][0][0]), int(img_pt[0][0][1])), 5, (0, 255, 0), 3)
+            #if(not np.any(np.isnan(difference)) and difference < 50):
+            if(not np.any(np.isnan(difference))):
+            #if difference < max(10, 0.02 * np.linalg.norm(curr_point - self.red_pt)): 
                 self.end = (int(img_pt[0][0][0]), int(img_pt[0][0][1]))
                 distance = np.linalg.norm(expected - self.red_pt)
                 print(distance)
-                return
-
+                #return
 
     def draw(self):
         cv2.circle(self.cv2_img, self.green_led, 5, (255, 0, 0), 3)
