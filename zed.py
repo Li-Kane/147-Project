@@ -14,7 +14,7 @@ class Zed:
     cv2_img = None
     # maximum march distance in mm
     MAX_DISTANCE = 2000
-    STEP_SIZE = 100
+    STEP_SIZE = 50
 
     def __init__(self, camera: sl.Camera):
         self.camera = camera
@@ -66,7 +66,7 @@ class Zed:
 
     def raymarch(self):
         expected = (-1, -1, -1, -1)
-        curr_point = self.red_pt
+        curr_point = np.copy(self.red_pt)
         for i in range(0, self.MAX_DISTANCE, self.STEP_SIZE):
             curr_point += self.direction * self.STEP_SIZE
             img_pt, _ = cv2.projectPoints(curr_point[:-1], np.ndarray(shape=(3)), np.ndarray(shape=(3)), self.CAM_INTRINSICS, self.DISTORTION)
@@ -75,13 +75,11 @@ class Zed:
                 return
             _, expected = self.points.get_value(int(img_pt[0][0][0]), int(img_pt[0][0][1]))
             difference = np.linalg.norm(curr_point - expected)
-            if(not np.any(np.isnan(difference)) and difference > 200):
-                # if our ray march has a background (that causes distance) to be further than 200
-                # we will draw a line earlier than we are supposed to
+            if(not np.any(np.isnan(difference)) and difference < 30):
                 self.end = (int(img_pt[0][0][0]), int(img_pt[0][0][1]))
                 distance = np.linalg.norm(expected - self.red_pt)
-                print("distance: ", distance)
-                #return
+                print(distance)
+                return
 
 
     def draw(self):
