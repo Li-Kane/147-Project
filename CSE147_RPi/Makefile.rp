@@ -1,0 +1,5 @@
+all:
+	gcc -o final_main final_main.c final_RPi.c -lwiringPi -lpthread
+
+clean:
+	rm -rf final_main
