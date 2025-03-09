@@ -2,12 +2,13 @@ import Jetson.GPIO as GPIO
 import time
 
 # Pin setup (adjust if using different GPIO pins)
-LCD_RS = 22
-LCD_E  = 27
-LCD_D4 = 17
-LCD_D5 = 18
-LCD_D6 = 23
-LCD_D7 = 24
+# BCM - BOARD
+LCD_RS = 22 #15
+LCD_E  = 27 #13
+LCD_D4 = 17 #11
+LCD_D5 = 18 #12
+LCD_D6 = 23 #16
+LCD_D7 = 24 #18
 LCD_WIDTH = 16   # Characters per line
 LCD_LINE_1 = 0x80  # LCD RAM address for the 1st line
 LCD_LINE_2 = 0xC0  # LCD RAM address for the 1st line

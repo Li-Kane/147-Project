@@ -29,7 +29,7 @@ def main():
     print(GPIO.JETSON_INFO)
 
     # Pin Setup:
-    GPIO.setmode(GPIO.BOARD)  # BCM pin-numbering scheme from Raspberry Pi
+    GPIO.setmode(GPIO.BCM)  # BCM pin-numbering scheme from Raspberry Pi
     #GPIO.setup(input_pin, GPIO.IN)  # set pin as an input pin
     GPIO.setup(input_pin, GPIO.IN)
     print("Starting demo now! Press CTRL+C to exit")
