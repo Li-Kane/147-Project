@@ -2,10 +2,13 @@ import cv2
 import numpy as np
 import pyzed.sl as sl
 
+'''
+Helper class to main.py that manages calculations for determining 
+a finger pointing direction and where it's pointing in 3D space
+'''
 class Zed:
     # maximum march distance in mm
-    MAX_DISTANCE = 5000
-    STEP_SIZE = 50
+    MAX_DISTANCE = 10000
     # determines smoothing factor 0 < x < 1
     SMOOTHNESS = 0.5
 
@@ -26,6 +29,7 @@ class Zed:
         self.end = (-1, -1)
         self.cv2_img = None
 
+    # get left camera's image and a depth per pixel
     def update_image(self):
         self.camera.retrieve_image(self.image, sl.VIEW.LEFT)
         self.camera.retrieve_measure(self.points, sl.MEASURE.XYZ)
@@ -41,6 +45,8 @@ class Zed:
             int(self.SMOOTHNESS * new_pos[1] + (1 - self.SMOOTHNESS) * old_pos[1]),
         )
 
+    # using opencv image processing, determine a (x, y) point
+    # for the center of the green and red led
     def find_leds(self):
         hsv = cv2.cvtColor(self.cv2_img, cv2.COLOR_BGR2HSV)
 
@@ -70,6 +76,8 @@ class Zed:
             new_red_led = (int(x + w/2), int(y + h/2))
             self.red_led = self.smooth_position(self.red_led, new_red_led)
 
+    # calculate a normalized direction vector in 3D
+    # space from the green led to the red led
     def get_direction(self):
         if (self.green_led != (-1, -1) and self.red_led != (-1, -1)):
             _, self.green_pt = self.points.get_value(self.green_led[0], self.green_led[1])
@@ -78,25 +86,41 @@ class Zed:
                 self.direction = self.red_pt - self.green_pt
                 self.direction = self.direction / np.linalg.norm(self.direction)
 
+
+    # from our red led, march in the calculated direction
+    # until we collide with an object, then return the distance
+    # to that object
     def raymarch(self):
         expected = (-1, -1, -1, -1)
         curr_point = np.copy(self.red_pt)
-        for i in range(0, self.MAX_DISTANCE, self.STEP_SIZE):
-            #self.STEP_SIZE = max(5, int(np.linalg.norm(self.red_pt - curr_point) * 0.05)) 
-            curr_point += self.direction * self.STEP_SIZE
+        dist_traveled = 0
+        while(dist_traveled < self.MAX_DISTANCE):
+            # march
+            step_size = max(5, dist_traveled * 0.1) 
+            dist_traveled += step_size
+            curr_point += self.direction * step_size
+
+            # determine where our marched point would be on the camera
             img_pt, _ = cv2.projectPoints(curr_point[:-1], np.ndarray(shape=(3)), np.ndarray(shape=(3)), self.CAM_INTRINSICS, self.DISTORTION)
-            if(np.any(np.isnan(img_pt[0][0])) or img_pt[0][0][0] < 0 or img_pt[0][0][0] > self.points.get_width() or img_pt[0][0][1] < 0 or img_pt[0][0][1] > self.points.get_height()):
+            x, y, = img_pt[0][0]
+            if (
+                np.any(np.isnan(x)) or np.any(np.isnan(y)) or
+                x < 0 or x > self.points.get_width() or
+                y < 0 or y > self.points.get_height()
+            ):
                 self.end = (-1, -1)
                 return
+            
+            # if the camera detects an object where our marched point is, there is a collision
             _, expected = self.points.get_value(int(img_pt[0][0][0]), int(img_pt[0][0][1]))
             difference = np.linalg.norm(curr_point - expected)
             cv2.circle(self.cv2_img, (int(img_pt[0][0][0]), int(img_pt[0][0][1])), 5, (0, 255, 0), 3)
-            if(not np.any(np.isnan(difference)) and difference < 50):
-            #if difference < max(10, 0.02 * np.linalg.norm(curr_point - self.red_pt)): 
+            if difference < max(40, 0.07 * dist_traveled): 
                 self.end = (int(img_pt[0][0][0]), int(img_pt[0][0][1]))
                 distance = np.linalg.norm(expected - self.red_pt)
                 return distance
 
+    # visualize leds and our pointing direction
     def draw(self):
         cv2.circle(self.cv2_img, self.green_led, 5, (255, 0, 0), 3)
         cv2.circle(self.cv2_img, self.red_led, 5, (255, 0, 0), 3)
