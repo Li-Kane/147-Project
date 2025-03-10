@@ -3,18 +3,11 @@ import numpy as np
 import pyzed.sl as sl
 
 class Zed:
-    image = sl.Mat()
-    points = sl.Mat()
-    green_led = (-1, -1)
-    red_led = (-1, -1)
-    green_pt = np.ndarray(shape=(4))
-    red_pt = np.ndarray(shape=(4))
-    direction = np.ndarray(shape=(4))
-    end = (-1, -1)
-    cv2_img = None
     # maximum march distance in mm
     MAX_DISTANCE = 5000
     STEP_SIZE = 50
+    # determines smoothing factor 0 < x < 1
+    SMOOTHNESS = 0.5
 
     def __init__(self, camera: sl.Camera):
         self.camera = camera
@@ -23,11 +16,30 @@ class Zed:
                                         [0,         params.fy, params.cy],
                                         [0,         0,         1]])
         self.DISTORTION = params.disto
+        self.image = sl.Mat()
+        self.points = sl.Mat()
+        self.green_led = (-1, -1)
+        self.red_led = (-1, -1)
+        self.green_pt = np.ndarray(shape=(4))
+        self.red_pt = np.ndarray(shape=(4))
+        self.direction = np.ndarray(shape=(4))
+        self.end = (-1, -1)
+        self.cv2_img = None
 
     def update_image(self):
         self.camera.retrieve_image(self.image, sl.VIEW.LEFT)
         self.camera.retrieve_measure(self.points, sl.MEASURE.XYZ)
         self.cv2_img = self.image.get_data()
+
+    # use exponential moving average (EMA) algorithm to
+    # more smoothly track led_pos across video frames
+    def smooth_position(self, old_pos, new_pos):
+        if old_pos is None:
+            return new_pos
+        return (
+            int(self.SMOOTHNESS * new_pos[0] + (1 - self.SMOOTHNESS) * old_pos[0]),
+            int(self.SMOOTHNESS * new_pos[1] + (1 - self.SMOOTHNESS) * old_pos[1]),
+        )
 
     def find_leds(self):
         hsv = cv2.cvtColor(self.cv2_img, cv2.COLOR_BGR2HSV)
@@ -40,7 +52,8 @@ class Zed:
         if contours:
             largest_contour = max(contours, key=cv2.contourArea)
             x, y, w, h = cv2.boundingRect(largest_contour)
-            self.green_led = (int(x + w/2), int(y + h/2))
+            new_green_led = (int(x + w/2), int(y + h/2))
+            self.green_led = self.smooth_position(self.green_led, new_green_led)
         
         # find red led
         lower_red1 = np.array([0, 150, 200])
@@ -54,7 +67,8 @@ class Zed:
         if contours:
             largest_contour = max(contours, key=cv2.contourArea)
             x, y, w, h = cv2.boundingRect(largest_contour)
-            self.red_led = (int(x + w/2), int(y + h/2))
+            new_red_led = (int(x + w/2), int(y + h/2))
+            self.red_led = self.smooth_position(self.red_led, new_red_led)
 
     def get_direction(self):
         if (self.green_led != (-1, -1) and self.red_led != (-1, -1)):
@@ -77,13 +91,11 @@ class Zed:
             _, expected = self.points.get_value(int(img_pt[0][0][0]), int(img_pt[0][0][1]))
             difference = np.linalg.norm(curr_point - expected)
             cv2.circle(self.cv2_img, (int(img_pt[0][0][0]), int(img_pt[0][0][1])), 5, (0, 255, 0), 3)
-            #if(not np.any(np.isnan(difference)) and difference < 50):
-            if(not np.any(np.isnan(difference))):
+            if(not np.any(np.isnan(difference)) and difference < 50):
             #if difference < max(10, 0.02 * np.linalg.norm(curr_point - self.red_pt)): 
                 self.end = (int(img_pt[0][0][0]), int(img_pt[0][0][1]))
                 distance = np.linalg.norm(expected - self.red_pt)
-                print(distance)
-                #return
+                return distance
 
     def draw(self):
         cv2.circle(self.cv2_img, self.green_led, 5, (255, 0, 0), 3)

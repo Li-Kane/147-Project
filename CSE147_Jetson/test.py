@@ -17,34 +17,39 @@
 # THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS INx THE SOFTWARE.
+# DEALINGS IN THE SOFTWARE.
 
 import Jetson.GPIO as GPIO
 import time
 
 # Pin Definitions
-input_pin = 15
+output_pin = 6  # BCM pin 18, BOARD pin 12
 
 def main():
-    print(GPIO.JETSON_INFO)
-
     # Pin Setup:
     GPIO.setmode(GPIO.BCM)  # BCM pin-numbering scheme from Raspberry Pi
-    #GPIO.setup(input_pin, GPIO.IN)  # set pin as an input pin
-    GPIO.setup(input_pin, GPIO.IN)
-    print("Starting demo now! Press CTRL+C to exit")
+    # set pin as an output pin with optional initial state of HIGH
+    GPIO.setup(output_pin, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.output(output_pin, GPIO.LOW)
+
     try:
         while True:
-            value = GPIO.input(input_pin)
-            if value == GPIO.HIGH:
-                value_str = "HIGH"
-            else:
-                value_str = "LOW"
-            print("Value read from pin {} : {}".format(input_pin,
-                                                        value_str))
-            time.sleep(1)
+            continue
     finally:
         GPIO.cleanup()
 
 if __name__ == '__main__':
     main()
+
+
+#(106, 'PQ.06', "tegra234-gpio", 31, 6, 'GPIO11', 'GP66', None, None),
+# PADCTL_G3_SOC_GPIO33_0
+# Offset: 0x70
+# Read/Write: R/W
+# Parity Protection: Y
+# Shadow: N
+# SCR Protection: PADCTL_G3_SCR_SCR_SOC_GPIO33_0
+# Reset: 0x00000474 (0bxxxx,xxxx,xxxx,xxxx,xxx0,x1x0,0111,0100)
+
+# how I set BCM and stuff
+# https://docs.nvidia.com/jetson/archives/r36.3/DeveloperGuide/HR/JetsonModuleAdaptationAndBringUp/JetsonAgxOrinSeries.html?highlight=pin%20direction#changing-the-pinmux

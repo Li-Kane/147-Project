@@ -21,8 +21,16 @@
 import pyzed.sl as sl
 import cv2
 from zed import Zed
+import Jetson.GPIO as GPIO
 
-def main():
+# BCM pin 6 is board pin 31
+output_pin = 6
+
+def setup_gpio():
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(output_pin, GPIO.OUT, initial=GPIO.LOW)
+
+def setup_camera():
     # Create and configure a Camera object
     camera = sl.Camera()
     init_params = sl.InitParameters(depth_mode=sl.DEPTH_MODE.ULTRA,
@@ -33,6 +41,13 @@ def main():
     camera.set_camera_settings(sl.VIDEO_SETTINGS.EXPOSURE, 10)
     if status != sl.ERROR_CODE.SUCCESS: #Ensure the camera has opened succesfully
         print("Camera Open : "+repr(status)+". Exit program.")
+        return None
+    return camera
+
+def main():
+    setup_gpio()
+    camera = setup_camera()
+    if (camera == None):
         exit()
 
     # Create and set RuntimeParameters after opening the camera
@@ -53,7 +68,9 @@ def main():
                 
                 # get a direction from green -> red
                 zed.get_direction()
-                zed.raymarch()
+                distance = zed.raymarch()
+                if(distance):
+                    print("distance: ", distance)
                 
                 # draw to visualize the calculations
                 zed.draw()
@@ -62,6 +79,7 @@ def main():
     finally:
         cv2.destroyAllWindows()
         camera.close()
+        GPIO.cleanup()
 
 if __name__ == "__main__":
     main()
