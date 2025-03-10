@@ -94,11 +94,12 @@ class Zed:
         expected = (-1, -1, -1, -1)
         curr_point = np.copy(self.red_pt)
         dist_traveled = 0
+        step_size = 100
         while(dist_traveled < self.MAX_DISTANCE):
             # march
-            step_size = max(5, dist_traveled * 0.1) 
             dist_traveled += step_size
             curr_point += self.direction * step_size
+            step_size = max(5, dist_traveled * 0.1) 
 
             # determine where our marched point would be on the camera
             img_pt, _ = cv2.projectPoints(curr_point[:-1], np.ndarray(shape=(3)), np.ndarray(shape=(3)), self.CAM_INTRINSICS, self.DISTORTION)
@@ -108,14 +109,14 @@ class Zed:
                 x < 0 or x > self.points.get_width() or
                 y < 0 or y > self.points.get_height()
             ):
-                self.end = (-1, -1)
-                return
+                #self.end = (-1, -1)
+                continue
             
             # if the camera detects an object where our marched point is, there is a collision
             _, expected = self.points.get_value(int(img_pt[0][0][0]), int(img_pt[0][0][1]))
             difference = np.linalg.norm(curr_point - expected)
             cv2.circle(self.cv2_img, (int(img_pt[0][0][0]), int(img_pt[0][0][1])), 5, (0, 255, 0), 3)
-            if difference < max(40, 0.07 * dist_traveled): 
+            if difference < max(10, 0.07 * dist_traveled): 
                 self.end = (int(img_pt[0][0][0]), int(img_pt[0][0][1]))
                 distance = np.linalg.norm(expected - self.red_pt)
                 return distance
