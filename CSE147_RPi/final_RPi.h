@@ -41,10 +41,7 @@
 // 7. Jetson Nano Communication
 #define PIN_NANO 2
 
-// B. Shared structure
-// All thread functions get a shared variable of the structure
-// as the function parameter.
-// If needed, you can add anything in this structure.
+// Shared Variable to communicate states
 typedef struct shared_variable {
     int bProgramExit; // Once set to 1, the program will terminate.
     // You can add more variables if needed.
@@ -53,13 +50,10 @@ typedef struct shared_variable {
     //int ROTstate; //rotation state (using CLOCKWISE and COUNTERCLOCKWISE)
 } SharedVariable;
 
-// C. Functions
-// You need to implement the following functions.
-// Do not change any function name here.
+// See final_RPi.c for descritpions of each method
 void init_shared_variable(SharedVariable* sv);
 void init_sensors(SharedVariable* sv);
 void body_button(SharedVariable* sv);     // Button
-//void body_encoder(SharedVariable* sv);    // Rotary encoder
 void body_twocolor(SharedVariable* sv);   // DIP two-color LED
 void body_rgbcolor(SharedVariable* sv);   // SMD RGB LED
 void body_laser(SharedVariable* sv); 
