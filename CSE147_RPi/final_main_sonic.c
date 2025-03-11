@@ -1,4 +1,4 @@
-//Threads file, used similar implementation to individual project
+//Threads file with ultrasonic sensor for testing distance, used similar implementation to individual project
 
 #include <stdio.h>
 #include <pthread.h>
@@ -13,12 +13,13 @@ void* thread_##NAME(void* param) { \
 	body_##NAME(pV); \
 	return NULL; }
 
-// Declare 6 threads, 1 for each sensor
+// Declare 7 thread, 1 for each sensor
 thread_decl(button)
 thread_decl(twocolor)
 thread_decl(rgbcolor)
 thread_decl(buzzer)
 thread_decl(laser)
+thread_decl(sonic)
 thread_decl(nano)
 
 // Thread creation and joining macros
@@ -45,7 +46,8 @@ int main(int argc, char* argv[]) {
 		  t_buzzer,
 	          t_rgbcolor,
 		  t_laser,
-		  t_nano;
+		  t_nano,
+		  t_sonic;
 
 	// Main program loop
 	while (v.bProgramExit != 1) {
@@ -55,6 +57,7 @@ int main(int argc, char* argv[]) {
 		thread_create(twocolor);
 		thread_create(rgbcolor);
 		thread_create(laser);
+		thread_create(sonic);
 		thread_create(nano);
 
 		// Wait for all threads to finish
@@ -63,6 +66,7 @@ int main(int argc, char* argv[]) {
 		thread_join(twocolor);
 		thread_join(rgbcolor);
 		thread_join(laser);
+		thread_join(sonic);
 		thread_join(nano);
 
 		// Add a slight delay between iterations

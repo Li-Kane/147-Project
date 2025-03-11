@@ -6,7 +6,7 @@
 void init_shared_variable(SharedVariable* sv) {
     sv->bProgramExit = 0;
     sv->state = RUNNING;
-    //sv->ROTstate = CLOCKWISE;
+    sv->nanoState = FAR;
 }
 
 void ledInit(void) {
@@ -19,26 +19,23 @@ void ledInit(void) {
 }
 
 void init_sensors(SharedVariable* sv) {
-    //pinMode(PIN_ALED, OUTPUT);
     pinMode(PIN_BUTTON, INPUT);
     int button;
     pinMode(PIN_LASER, OUTPUT);
     pinMode(PIN_SONIC_ECHO, INPUT);
     pinMode(PIN_SONIC_TRIG, OUTPUT);
-    //pinMode(PIN_ROTARY_CLK, INPUT);
-    //int A;
-    //pinMode(PIN_ROTARY_DT, INPUT);
-    //int B;
-    //int pLast = digitalRead(PIN_ROTARY_CLK);
+    pinMode(PIN_BUZZER, OUTPUT);
+    pinMode(PIN_NANO, INPUT);
     float dist;
     long travelTime;
     long startTime;
+    int nano;
     ledInit();
 }
 
 // Button (DONE)
 void body_button(SharedVariable* sv) {
-    int button = READ(PIN_BUTTON);
+    int button = digitalRead(PIN_BUTTON);
     if(button == 0){
         switch(sv->state){
             case RUNNING:
@@ -48,6 +45,17 @@ void body_button(SharedVariable* sv) {
                 sv->state = RUNNING;
                 break;
         }
+    }
+}
+
+//Jetson Nano INPUT
+void body_nano(SharedVariable* sv){
+    int nano = digitalRead(PIN_NANO);
+    if(nano == 1){
+	sv->nanoState = CLOSE;
+    }
+    else{
+	sv->nanoState = FAR;
     }
 }
 
@@ -93,7 +101,7 @@ void body_laser(SharedVariable* sv) {
     }
 }
 
-// SONIC SENSOR (ALMOST DONE? NEED TO FIX DELAY STATEMENTS?)
+// SONIC SENSOR
 void body_sonic(SharedVariable* sv) {
     digitalWrite(PIN_SONIC_TRIG, 0);
 	delayMicroseconds(500);
@@ -107,8 +115,19 @@ void body_sonic(SharedVariable* sv) {
 	long startTime = micros();
         while(digitalRead(PIN_SONIC_ECHO) == 1){
 	}
-    long travelTime = micros() - startTime;
-    float dist = travelTime / 58;
+	long travelTime = micros() - startTime;
+        float dist = travelTime / 58;
 	printf("Measured a dist of %f\n", dist);
 	delayMicroseconds(100);
+}
+
+void body_buzzer(SharedVariable* sv) {
+	switch(sv->nanoState){
+		case CLOSE:
+			digitalWrite(PIN_BUZZER, HIGH);
+			break;
+		case FAR:
+			digitalWrite(PIN_BUZZER, LOW);
+			break;
+	}
 }
