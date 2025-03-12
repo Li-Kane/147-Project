@@ -133,7 +133,7 @@ void body_sonic(SharedVariable* sv) {
 	long travelTime = micros() - startTime;
     float dist = travelTime / 58;
 	printf("Measured a dist of %f\n", dist);
-	delayMicroseconds(100);
+	delayMicroseconds(1000000);
 }
 
 // Active Buzzer - This outputs a buzzing noise when we read that we are pointing 
