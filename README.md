@@ -21,3 +21,9 @@ Since this can be a dangerous operation, it is recommended to read through the d
 From here, you will be able to start the script by plugging in the ZED2 camera to a USB port and simply running `python3 ./CSE147_Jetson/main.py`.
 
 ## Raspberry Pi 5
+To begin running on the Raspberry Pi 5, you will need to flash the sd card with the Ubunutu custom kernel that was provided in Individual Project 1. Once you have set up your Raspberry Pi with the correct kernel you can begin to download independecies. This includes WiringPi which can be downloaded from this repo: https://github.com/WiringPi/WiringPi Once you have downloaded WiringPi by following the step in the github link, you should be good to start running the .c and .h files on the Raspberry Pi 5. 
+When we want to run we first should run `make clean`. After running clean, we now have to choose if we want to compile for just using the glove, or if we want to compile using the ultrasonic sensor as well for testing distances. If we just want to compile we can simply run `make`. If we want to compile with the ultrasonic sensor, we run `make withSonic`. Both of these will compile into a file called, "final_main". We can then run this by calling `sudo ./final_main`.
+Upon running the LEDs and laser emitter shoukd turn on. Then we want to start the Jetson Nano code, which will allow for the GPIO pins of the two to communicate via one GPIO connection.
+
+## Ordering
+First compile both files, then run the file on the RPi5 first, which should then be followed by running the file on the Jetson Nano.
